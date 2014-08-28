@@ -28,6 +28,7 @@ public:
     //   > 0 iff "a" > "b"
     virtual int Compare(const Slice& a, const Slice& b) const = 0;
 
+    //z 检查comparator是否不匹配，比如说创建使用一种comparator，访问时使用另一种 comparator
     // The name of the comparator.  Used to check for comparator
     // mismatches (i.e., a DB created with one comparator is
     // accessed using a different comparator.
@@ -38,6 +39,7 @@ public:
     //
     // Names starting with "leveldb." are reserved and should not be used
     // by any clients of this package.
+    //z 返回一个名字
     virtual const char* Name() const = 0;
 
     // Advanced functions: these are used to reduce the space requirements
