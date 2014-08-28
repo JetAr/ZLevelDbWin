@@ -1,0 +1,40 @@
+﻿// Copyright (c) 2011 The LevelDB Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file. See the AUTHORS file for names of contributors.
+
+#ifndef STORAGE_LEVELDB_UTIL_MUTEXLOCK_H_
+#define STORAGE_LEVELDB_UTIL_MUTEXLOCK_H_
+
+#include "port/port.h"
+
+namespace leveldb {
+
+// Helper class that locks a mutex on construction and unlocks the mutex when
+// the destructor of the MutexLock object is invoked.
+//
+// Typical usage:
+//
+//   void MyClass::MyMethod() {
+//     MutexLock l(&mu_);       // mu_ is an instance variable
+//     ... some complex code, possibly with multiple return paths ...
+//   }
+
+	//z 类似 windows 下的 CSingleLock
+	/// 在 MutexLock object 的周期内锁定 mutex， 结束时 unlock
+	class MutexLock {
+	public:
+		explicit MutexLock(port::Mutex *mu) : mu_(mu) {
+			this->mu_->Lock();
+		}
+		~MutexLock() { this->mu_->Unlock(); }
+
+	private:
+		//z 注意这里使用了 const
+		port::Mutex *const mu_;
+		// No copying allowed
+		MutexLock(const MutexLock&);
+		void operator=(const MutexLock&);
+	};
+}
+
+#endif  // STORAGE_LEVELDB_UTIL_MUTEXLOCK_H_
