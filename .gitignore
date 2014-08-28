@@ -1,1 +1,12 @@
 *.ncb
+*.lib
+*.ilk
+*.obj
+*.pdb
+*.suo
+*.exe
+*.htm
+*.idb
+*.manifest
+*.res
+*.dep
