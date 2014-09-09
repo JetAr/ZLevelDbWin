@@ -11,3 +11,4 @@
 *.manifest
 *.res
 *.dep
+*.user
