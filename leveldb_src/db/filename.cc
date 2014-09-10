@@ -23,18 +23,21 @@ static std::string MakeFileName(const std::string& name, uint64_t number,
     return name + buf;
 }
 
+//z 生成 log 名称
 std::string LogFileName(const std::string& name, uint64_t number)
 {
     assert(number > 0);
     return MakeFileName(name, number, "log");
 }
 
+//z 生成table名称，sst
 std::string TableFileName(const std::string& name, uint64_t number)
 {
     assert(number > 0);
     return MakeFileName(name, number, "sst");
 }
 
+//z 生成 manifest 文件
 std::string DescriptorFileName(const std::string& dbname, uint64_t number)
 {
     assert(number > 0);
@@ -79,7 +82,7 @@ std::string OldInfoLogFileName(const std::string& dbname)
 //    dbname/LOG.old
 //    dbname/MANIFEST-[0-9]+
 //    dbname/[0-9]+.(log|sst)
-//z 解析产生的文件名称
+//z 由文件名称解析产生的文件类型以及编号信息
 bool ParseFileName(const std::string& fname,
                    uint64_t* number,
                    FileType* type)
@@ -150,10 +153,12 @@ Status SetCurrentFile(Env* env, const std::string& dbname,
                       uint64_t descriptor_number)
 {
     // Remove leading "dbname/" and add newline to manifest file name
+    //z 生成一个manifest文件
     std::string manifest = DescriptorFileName(dbname, descriptor_number);
     Slice contents = manifest;
     assert(contents.starts_with(dbname + "/"));
     contents.remove_prefix(dbname.size() + 1);
+    //z 生一个临时文件
     std::string tmp = TempFileName(dbname, descriptor_number);
     Status s = WriteStringToFile(env, contents.ToString() + "\n", tmp);
     if (s.ok())

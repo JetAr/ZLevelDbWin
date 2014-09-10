@@ -502,6 +502,7 @@ BOOL Win32MapFile::_Init( LPCWSTR Path )
                          Flag,
                          FILE_ATTRIBUTE_NORMAL,
                          NULL);
+    //z 检查是否创建文件成功
     if(!_hFile || _hFile == INVALID_HANDLE_VALUE)
         return FALSE;
     else
