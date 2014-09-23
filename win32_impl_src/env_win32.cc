@@ -636,6 +636,7 @@ bool Win32Env::FileExists(const std::string& fname)
     return ::PathFileExistsW(Win32::MultiByteToWChar(path.c_str() ) ) ? true : false;
 }
 
+//z 得到目录下的文件，不迭代子目录
 Status Win32Env::GetChildren(const std::string& dir, std::vector<std::string>* result)
 {
     Status sRet;
