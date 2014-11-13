@@ -35,6 +35,7 @@ public:
 	// allocations).
 	size_t MemoryUsage() const
 	{
+        //z 分配内存空间，以及存放char*指针的vector所大概占据的空间。
 		return blocks_memory_ + blocks_.capacity() * sizeof(char*);
 	}
 
@@ -47,6 +48,7 @@ private:
 	size_t alloc_bytes_remaining_;
 
 	// Array of new[] allocated memory blocks
+    //z 存放 char* 指针
 	std::vector<char*> blocks_;
 
 	// Bytes of memory in blocks allocated so far

@@ -28,51 +28,52 @@ MemTable::~MemTable() {
   assert(refs_ == 0);
 }
 
+//z 实际调用了 arena 的 MemoryUsage 函数
 size_t MemTable::ApproximateMemoryUsage() { return arena_.MemoryUsage(); }
 
-int MemTable::KeyComparator::operator()(const char* aptr, const char* bptr)
-    const {
-  // Internal keys are encoded as length-prefixed strings.
-  Slice a = GetLengthPrefixedSlice(aptr);
-  Slice b = GetLengthPrefixedSlice(bptr);
-  return comparator.Compare(a, b);
+int MemTable::KeyComparator::operator()(const char* aptr, const char* bptr) const 
+{
+    // Internal keys are encoded as length-prefixed strings.
+    Slice a = GetLengthPrefixedSlice(aptr);
+    Slice b = GetLengthPrefixedSlice(bptr);
+    return comparator.Compare(a, b);
 }
 
 // Encode a suitable internal key target for "target" and return it.
 // Uses *scratch as scratch space, and the returned pointer will point
 // into this scratch space.
 static const char* EncodeKey(std::string* scratch, const Slice& target) {
-  scratch->clear();
-  PutVarint32(scratch, target.size());
-  scratch->append(target.data(), target.size());
-  return scratch->data();
+    scratch->clear();
+    PutVarint32(scratch, target.size());
+    scratch->append(target.data(), target.size());
+    return scratch->data();
 }
 
 class MemTableIterator: public Iterator {
- public:
-  explicit MemTableIterator(MemTable::Table* table) : iter_(table) { }
+public:
+    explicit MemTableIterator(MemTable::Table* table) : iter_(table) { }
 
-  virtual bool Valid() const { return iter_.Valid(); }
-  virtual void Seek(const Slice& k) { iter_.Seek(EncodeKey(&tmp_, k)); }
-  virtual void SeekToFirst() { iter_.SeekToFirst(); }
-  virtual void SeekToLast() { iter_.SeekToLast(); }
-  virtual void Next() { iter_.Next(); }
-  virtual void Prev() { iter_.Prev(); }
-  virtual Slice key() const { return GetLengthPrefixedSlice(iter_.key()); }
-  virtual Slice value() const {
-    Slice key_slice = GetLengthPrefixedSlice(iter_.key());
-    return GetLengthPrefixedSlice(key_slice.data() + key_slice.size());
-  }
+    virtual bool Valid() const { return iter_.Valid(); }
+    virtual void Seek(const Slice& k) { iter_.Seek(EncodeKey(&tmp_, k)); }
+    virtual void SeekToFirst() { iter_.SeekToFirst(); }
+    virtual void SeekToLast() { iter_.SeekToLast(); }
+    virtual void Next() { iter_.Next(); }
+    virtual void Prev() { iter_.Prev(); }
+    virtual Slice key() const { return GetLengthPrefixedSlice(iter_.key()); }
+    virtual Slice value() const {
+        Slice key_slice = GetLengthPrefixedSlice(iter_.key());
+        return GetLengthPrefixedSlice(key_slice.data() + key_slice.size());
+    }
 
-  virtual Status status() const { return Status::OK(); }
+    virtual Status status() const { return Status::OK(); }
 
- private:
-  MemTable::Table::Iterator iter_;
-  std::string tmp_;       // For passing to EncodeKey
+private:
+    MemTable::Table::Iterator iter_;
+    std::string tmp_;       // For passing to EncodeKey
 
-  // No copying allowed
-  MemTableIterator(const MemTableIterator&);
-  void operator=(const MemTableIterator&);
+    // No copying allowed
+    MemTableIterator(const MemTableIterator&);
+    void operator=(const MemTableIterator&);
 };
 
 Iterator* MemTable::NewIterator() {

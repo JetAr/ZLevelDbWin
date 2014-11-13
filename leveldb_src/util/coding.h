@@ -94,6 +94,7 @@ inline const char* GetVarint32Ptr(const char* p,
   if (p < limit) {
     uint32_t result = *(reinterpret_cast<const unsigned char*>(p));
     // 128 = 2^7 = 8*16 = 1000000。
+    //z 判断 ascII 值是否小于 128
 	if ((result & 128) == 0) {
       *value = result;
       return p + 1;//z 为何 return p+1

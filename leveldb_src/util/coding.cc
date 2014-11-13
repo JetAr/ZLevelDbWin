@@ -126,7 +126,8 @@ namespace leveldb {
 			for (uint32_t shift = 0; shift <= 28 && p < limit; shift += 7) {
 				uint32_t byte = *(reinterpret_cast<const unsigned char*>(p));
 				p++;//z 指向下一个8位
-				if (byte & 128) {
+				//z 如果 byte 值是大于 128 的
+                if (byte & 128) {
 					// More bytes are present
 					result |= ((byte & 127) << shift);
 				} else {//z 此时其值为 1000 0000，如果遇到此值就返回。不明白为啥？但是正常的char值不应该有此值。
