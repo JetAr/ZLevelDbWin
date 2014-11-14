@@ -133,7 +133,12 @@ private:
     LRUHandle** FindPointer(const Slice& key, uint32_t hash)
     {
         //z 根据hash值访问list_中的element。
+        //z 看值的情况，除了在 shard_ 时用到了hash，后续继续用到 hash 值。
+        //z 返回 list_ 所对应的情况
+        //z 假设 length_ 为 2^n ， 比如64，减1之后形式就是 111111。
+        //z 使用 hash 来 &， 可能会出现值有冲突的情况的么？
         LRUHandle** ptr = &list_[hash & (length_ - 1)];
+
         //z ptr 中的值不为空，说明该hash已经被占位。那么循环至next_hash链结尾，
         //z 按说由 hash 得出的这个位置，由next_hash所指向的位置hash值应该都是一样，这里为何还要加以比较了？
         while (*ptr != NULL &&
@@ -141,6 +146,7 @@ private:
         {
             ptr = &(*ptr)->next_hash;
         }
+
         //z 返回找到的，可能为NULL。
         return ptr;
     }
@@ -285,7 +291,9 @@ void LRUCache::LRU_Append(LRUHandle* e)
 
 Cache::Handle* LRUCache::Lookup(const Slice& key, uint32_t hash)
 {
+    //z 这样的话，在查找的时候只用锁定16中的一个，而不影响其他shard_的操作
     MutexLock l(&mutex_);
+    //z 在 table 中查找
     LRUHandle* e = table_.Lookup(key, hash);
     if (e != NULL)
     {
@@ -362,6 +370,8 @@ static const int kNumShards = 1 << kNumShardBits;
 class ShardedLRUCache : public Cache
 {
 private:
+    //z 一共有16个 LRUCache，插入的时候，会根据key的hash值的前四位插入到不同的shard中去
+    //z 由于只取其前四位，得到的值的范围为 0-15，不知道hash出来的值是否均匀分布
     LRUCache shard_[kNumShards];
     port::Mutex id_mutex_;
     uint64_t last_id_;
@@ -371,6 +381,7 @@ private:
         return Hash(s.data(), s.size(), 0);
     }
 
+    //z 根据hash值的前四位，放入不同的桶中
     static uint32_t Shard(uint32_t hash)
     {
         return hash >> (32 - kNumShardBits);
@@ -381,6 +392,7 @@ public:
         : last_id_(0)
     {
         const size_t per_shard = (capacity + (kNumShards - 1)) / kNumShards;
+        //z 对 16 个 shard_ 均设置容量
         for (int s = 0; s < kNumShards; s++)
         {
             shard_[s].SetCapacity(per_shard);
@@ -390,12 +402,17 @@ public:
     virtual Handle* Insert(const Slice& key, void* value, size_t charge,
                            void (*deleter)(const Slice& key, void* value))
     {
+        //z 由 key 计算得到一个 hash 值
         const uint32_t hash = HashSlice(key);
+        //z 根据 hash 值插入到不同的 shard_ 中去。
+        //z charge 用于什么目的了？
         return shard_[Shard(hash)].Insert(key, hash, value, charge, deleter);
     }
     virtual Handle* Lookup(const Slice& key)
     {
+        //z 计算hash值
         const uint32_t hash = HashSlice(key);
+        //z 到对应的 shard_ 中去查找
         return shard_[Shard(hash)].Lookup(key, hash);
     }
     virtual void Release(Handle* handle)

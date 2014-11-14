@@ -41,7 +41,7 @@ TableCache::TableCache(const std::string& dbname,
     : env_(options->env),
       dbname_(dbname),
       options_(options),
-      cache_(NewLRUCache(entries))
+      cache_(NewLRUCache(entries))//z 使用的也是LRU cache。
 {
 }
 
@@ -61,17 +61,23 @@ Iterator* TableCache::NewIterator(const ReadOptions& options,
     }
 
     char buf[sizeof(file_number)];
+    //z 统一编码为 le 
     EncodeFixed64(buf, file_number);
     Slice key(buf, sizeof(buf));
+    //z 在cache中查找
     Cache::Handle* handle = cache_->Lookup(key);
+    //z 如果没有找到
     if (handle == NULL)
     {
+        //z 根据dbname 以及 file_number 构造出一个 table file name
         std::string fname = TableFileName(dbname_, file_number);
         RandomAccessFile* file = NULL;
         Table* table = NULL;
+        //z 根据 table file name 创建文件
         Status s = env_->NewRandomAccessFile(fname, &file);
         if (s.ok())
         {
+            //z 打开文件
             s = Table::Open(*options_, file, file_size, &table);
         }
 
@@ -84,6 +90,7 @@ Iterator* TableCache::NewIterator(const ReadOptions& options,
             return NewErrorIterator(s);
         }
 
+        //z 创建结构，用于存储对应的 file name 以及 table 等。
         TableAndFile* tf = new TableAndFile;
         tf->file = file;
         tf->table = table;

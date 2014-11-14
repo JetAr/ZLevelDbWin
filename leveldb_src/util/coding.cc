@@ -20,6 +20,7 @@ void EncodeFixed32(char* buf, uint32_t value)
 #endif
 }
 
+//z 根据cpu 是be还是le的，统一将数据转换为le的。
 void EncodeFixed64(char* buf, uint64_t value)
 {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
