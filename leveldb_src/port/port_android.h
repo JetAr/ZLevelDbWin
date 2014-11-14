@@ -29,53 +29,58 @@
 #endif
 
 extern "C" {
-  size_t fread_unlocked(void *a, size_t b, size_t c, FILE *d);
-  size_t fwrite_unlocked(const void *a, size_t b, size_t c, FILE *d);
-  int fflush_unlocked(FILE *f);
-  int fdatasync (int fd);
+    size_t fread_unlocked(void *a, size_t b, size_t c, FILE *d);
+    size_t fwrite_unlocked(const void *a, size_t b, size_t c, FILE *d);
+    int fflush_unlocked(FILE *f);
+    int fdatasync (int fd);
 }
 
-namespace leveldb {
-namespace port {
+namespace leveldb
+{
+namespace port
+{
 
 static const bool kLittleEndian = __BYTE_ORDER == __LITTLE_ENDIAN;
 
 class CondVar;
 
-class Mutex {
- public:
-  Mutex();
-  ~Mutex();
+class Mutex
+{
+public:
+    Mutex();
+    ~Mutex();
 
-  void Lock();
-  void Unlock();
-  void AssertHeld() {
-    //TODO(gabor): How can I implement this?
-  }
+    void Lock();
+    void Unlock();
+    void AssertHeld()
+    {
+        //TODO(gabor): How can I implement this?
+    }
 
- private:
-  friend class CondVar;
-  pthread_mutex_t mu_;
+private:
+    friend class CondVar;
+    pthread_mutex_t mu_;
 
-  // No copying
-  Mutex(const Mutex&);
-  void operator=(const Mutex&);
+    // No copying
+    Mutex(const Mutex&);
+    void operator=(const Mutex&);
 };
 
-class CondVar {
- public:
-  explicit CondVar(Mutex* mu);
-  ~CondVar();
-  void Wait();
-  void Signal();
-  void SignalAll();
- private:
-  Mutex* mu_;
-  pthread_cond_t cv_;
+class CondVar
+{
+public:
+    explicit CondVar(Mutex* mu);
+    ~CondVar();
+    void Wait();
+    void Signal();
+    void SignalAll();
+private:
+    Mutex* mu_;
+    pthread_cond_t cv_;
 };
 
 #ifndef ARMV6_OR_7
-// On ARM chipsets <V6, 0xffff0fa0 is the hard coded address of a 
+// On ARM chipsets <V6, 0xffff0fa0 is the hard coded address of a
 // memory barrier function provided by the kernel.
 typedef void (*LinuxKernelMemoryBarrierFunc)(void);
 LinuxKernelMemoryBarrierFunc pLinuxKernelMemoryBarrier ATTRIBUTE_WEAK =
@@ -83,71 +88,82 @@ LinuxKernelMemoryBarrierFunc pLinuxKernelMemoryBarrier ATTRIBUTE_WEAK =
 #endif
 
 // Storage for a lock-free pointer
-class AtomicPointer {
- private:
-  void* rep_;
+class AtomicPointer
+{
+private:
+    void* rep_;
 
-  inline void MemoryBarrier() const {
-    // TODO(gabor): This only works on Android instruction sets >= V6
+    inline void MemoryBarrier() const
+    {
+        // TODO(gabor): This only works on Android instruction sets >= V6
 #ifdef ARMV6_OR_7
-    __asm__ __volatile__("dmb" : : : "memory");
+        __asm__ __volatile__("dmb" : : : "memory");
 #else
-    pLinuxKernelMemoryBarrier();
+        pLinuxKernelMemoryBarrier();
 #endif
-  }
+    }
 
- public:
-  AtomicPointer() { }
-  explicit AtomicPointer(void* v) : rep_(v) { }
-  inline void* Acquire_Load() const {
-    void* r = rep_;
-    MemoryBarrier();
-    return r;
-  }
-  inline void Release_Store(void* v) {
-    MemoryBarrier();
-    rep_ = v;
-  }
-  inline void* NoBarrier_Load() const {
-    void* r = rep_;
-    return r;
-  }
-  inline void NoBarrier_Store(void* v) {
-    rep_ = v;
-  }
+public:
+    AtomicPointer() { }
+    explicit AtomicPointer(void* v) : rep_(v) { }
+    inline void* Acquire_Load() const
+    {
+        void* r = rep_;
+        MemoryBarrier();
+        return r;
+    }
+    inline void Release_Store(void* v)
+    {
+        MemoryBarrier();
+        rep_ = v;
+    }
+    inline void* NoBarrier_Load() const
+    {
+        void* r = rep_;
+        return r;
+    }
+    inline void NoBarrier_Store(void* v)
+    {
+        rep_ = v;
+    }
 };
 
 // TODO(gabor): Implement compress
 inline bool Snappy_Compress(
     const char* input,
     size_t input_length,
-    std::string* output) {
-  return false;
+    std::string* output)
+{
+    return false;
 }
 
 // TODO(gabor): Implement uncompress
 inline bool Snappy_GetUncompressedLength(const char* input, size_t length,
-                                         size_t* result) {
-  return false;
+        size_t* result)
+{
+    return false;
 }
 
 // TODO(gabor): Implement uncompress
 inline bool Snappy_Uncompress(
     const char* input_data,
     size_t input_length,
-    char* output) {
-  return false;
+    char* output)
+{
+    return false;
 }
 
-inline uint64_t ThreadIdentifier() {
-  pthread_t tid = pthread_self();
-  uint64_t r = 0;
-  memcpy(&r, &tid, sizeof(r) < sizeof(tid) ? sizeof(r) : sizeof(tid));
-  return r;
+inline uint64_t ThreadIdentifier()
+{
+    pthread_t tid = pthread_self();
+    uint64_t r = 0;
+    memcpy(&r, &tid, sizeof(r) < sizeof(tid) ? sizeof(r) : sizeof(tid));
+    return r;
 }
 
-inline bool GetHeapProfile(void (*func)(void*, const char*, int), void* arg) {
-  return false;
+inline bool GetHeapProfile(void (*func)(void*, const char*, int), void* arg)
+{
+    return false;
 }
 
 }

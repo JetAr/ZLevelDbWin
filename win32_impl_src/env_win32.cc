@@ -24,7 +24,7 @@
 namespace leveldb
 {
 
-    Win32Env g_Env;
+Win32Env g_Env;
 
 namespace Win32
 {
@@ -47,7 +47,8 @@ std::wstring GetCurrentDirW()
 
 std::string& ModifyPath(std::string& path)
 {
-    if(path[0] == '/' || path[0] == '\\'){
+    if(path[0] == '/' || path[0] == '\\')
+    {
         path = CurrentDir + path;
     }
     std::replace(path.begin(),path.end(),'/','\\');
@@ -57,7 +58,8 @@ std::string& ModifyPath(std::string& path)
 
 std::wstring& ModifyPath(std::wstring& path)
 {
-    if(path[0] == L'/' || path[0] == L'\\'){
+    if(path[0] == L'/' || path[0] == L'\\')
+    {
         path = CurrentDirW + path;
     }
     std::replace(path.begin(),path.end(),L'/',L'\\');
@@ -67,18 +69,18 @@ std::wstring& ModifyPath(std::wstring& path)
 std::string GetLastErrSz()
 {
     LPVOID lpMsgBuf;
-    FormatMessageW( 
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-        FORMAT_MESSAGE_FROM_SYSTEM | 
+    FormatMessageW(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
         FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,
         GetLastError(),
         0, // Default language
         (LPWSTR) &lpMsgBuf,
         0,
-        NULL 
-        );
-    std::string Err = WCharToMultiByte((LPCWSTR)lpMsgBuf); 
+        NULL
+    );
+    std::string Err = WCharToMultiByte((LPCWSTR)lpMsgBuf);
     LocalFree( lpMsgBuf );
     return Err;
 }
@@ -86,17 +88,17 @@ std::string GetLastErrSz()
 std::wstring GetLastErrSzW()
 {
     LPVOID lpMsgBuf;
-    FormatMessageW( 
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-        FORMAT_MESSAGE_FROM_SYSTEM | 
+    FormatMessageW(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
         FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,
         GetLastError(),
         0, // Default language
         (LPWSTR) &lpMsgBuf,
         0,
-        NULL 
-        );
+        NULL
+    );
     std::wstring Err = (LPCWSTR)lpMsgBuf;
     LocalFree(lpMsgBuf);
     return Err;
@@ -136,7 +138,7 @@ const size_t g_PageSize = GetPageSize();
 
 
 
-Env* Env::Default() 
+Env* Env::Default()
 {
     return &g_Env;
 }
@@ -156,11 +158,14 @@ Status Win32SequentialFile::Read( size_t n, Slice* result, char* scratch )
 {
     Status sRet;
     DWORD hasRead = 0;
-	//z 读取文件
-    if(_hFile && ReadFile(_hFile,scratch,n,&hasRead,NULL) ){
-        //z 从空间及其长度构造一个 Slice 
-		*result = Slice(scratch,hasRead);
-    } else {
+    //z 读取文件
+    if(_hFile && ReadFile(_hFile,scratch,n,&hasRead,NULL) )
+    {
+        //z 从空间及其长度构造一个 Slice
+        *result = Slice(scratch,hasRead);
+    }
+    else
+    {
         sRet = Status::IOError(_filename, Win32::GetLastErrSz() );
     }
     return sRet;
@@ -173,7 +178,8 @@ Status Win32SequentialFile::Skip( uint64_t n )
     LARGE_INTEGER Move,NowPointer;
     Move.QuadPart = n;
     //z 使用 LARGE_INTEGER 支持大文件。
-	if(!SetFilePointerEx(_hFile,Move,&NowPointer,FILE_CURRENT)){
+    if(!SetFilePointerEx(_hFile,Move,&NowPointer,FILE_CURRENT))
+    {
         sRet = Status::IOError(_filename,Win32::GetLastErrSz());
     }
     return sRet;
@@ -186,7 +192,7 @@ BOOL Win32SequentialFile::isEnable()
 
 BOOL Win32SequentialFile::_Init()
 {
-	//z 打开文件？
+    //z 打开文件？
     _hFile = CreateFileW(Win32::MultiByteToWChar(_filename.c_str() ),
                          GENERIC_READ,
                          FILE_SHARE_READ,
@@ -199,8 +205,9 @@ BOOL Win32SequentialFile::_Init()
 
 void Win32SequentialFile::_CleanUp()
 {
-	//z 清理工作，关闭文件
-    if(_hFile){
+    //z 清理工作，关闭文件
+    if(_hFile)
+    {
         CloseHandle(_hFile);
         _hFile = NULL;
     }
@@ -237,7 +244,7 @@ BOOL Win32RandomAccessFile::_Init( LPCWSTR path )
     BOOL bRet = FALSE;
     if(!_hFile)
         _hFile = ::CreateFileW(path,GENERIC_READ,0,NULL,OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS,NULL);
+                               FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS,NULL);
     if(!_hFile || _hFile == INVALID_HANDLE_VALUE )
         _hFile = NULL;
     else
@@ -252,7 +259,8 @@ BOOL Win32RandomAccessFile::isEnable()
 
 void Win32RandomAccessFile::_CleanUp()
 {
-    if(_hFile){
+    if(_hFile)
+    {
         ::CloseHandle(_hFile);
         _hFile = NULL;
     }
@@ -269,9 +277,9 @@ size_t Win32MapFile::_Roundup( size_t x, size_t y )
 //z 返回不大于 s 的且为 _page_size 最大倍数的数字
 size_t Win32MapFile::_TruncateToPageBoundary( size_t s )
 {
-	//z 去掉余数
+    //z 去掉余数
     s -= (s & (_page_size - 1));
-	//z 确保能够整除
+    //z 确保能够整除
     assert((s % _page_size) == 0);
     return s;
 }
@@ -279,17 +287,19 @@ size_t Win32MapFile::_TruncateToPageBoundary( size_t s )
 bool Win32MapFile::_UnmapCurrentRegion()
 {
     bool result = true;
-    if (_base != NULL) {
-		//z 这意思是没有完全写满，将设置 _pending_sync 为true ？
-        if (_last_sync < _limit) {
+    if (_base != NULL)
+    {
+        //z 这意思是没有完全写满，将设置 _pending_sync 为true ？
+        if (_last_sync < _limit)
+        {
             // Defer syncing this data until next Sync() call, if any
             _pending_sync = true;
         }
-		//z unmap file
+        //z unmap file
         UnmapViewOfFile(_base);
-		//z 关闭指针
+        //z 关闭指针
         CloseHandle(_base_handle);
-		//z 更新文件指针到当前的结尾部分
+        //z 更新文件指针到当前的结尾部分
         _file_offset += _limit - _base;
         _base = NULL;
         _base_handle = NULL;
@@ -297,9 +307,10 @@ bool Win32MapFile::_UnmapCurrentRegion()
         _last_sync = NULL;
         _dst = NULL;
         // Increase the amount we map the next time, but capped at 1MB
-		//z 从64k起步，每次unmap的时候会将 _map_size 增大一倍，直至到达一兆
-		//z 2^6 * 2^10  ---> 2^10 * 2^10，四次之后，每次都存放一兆。
-        if (_map_size < (1<<20)) {
+        //z 从64k起步，每次unmap的时候会将 _map_size 增大一倍，直至到达一兆
+        //z 2^6 * 2^10  ---> 2^10 * 2^10，四次之后，每次都存放一兆。
+        if (_map_size < (1<<20))
+        {
             _map_size *= 2;
         }
     }
@@ -315,34 +326,36 @@ bool Win32MapFile::_MapNewRegion()
     //LONG newSizeHigh = (LONG)((file_offset_ + map_size_) >> 32);
     //LONG newSizeLow = (LONG)((file_offset_ + map_size_) & 0xFFFFFFFF);
     //z 得到高 32 位
-	DWORD off_hi = (DWORD)(_file_offset >> 32);
-	//z 得到低 32 位
+    DWORD off_hi = (DWORD)(_file_offset >> 32);
+    //z 得到低 32 位
     DWORD off_lo = (DWORD)(_file_offset & 0xFFFFFFFF);
 
     LARGE_INTEGER newSize;
     newSize.QuadPart = _file_offset + _map_size;
-	//z 将文件指针相对FILE_BEGIN移动到newSize处
+    //z 将文件指针相对FILE_BEGIN移动到newSize处
     SetFilePointerEx(_hFile, newSize, NULL, FILE_BEGIN);
-	//z 设置当前位置为文件的结束位置
+    //z 设置当前位置为文件的结束位置
     SetEndOfFile(_hFile);
-	
-	//z 创建 file mapping， 记录下 map file handle
-    _base_handle = CreateFileMappingA(
-        _hFile,
-        NULL,
-        PAGE_READWRITE,
-        0,
-        0,
-        0);
 
-	//z 映射新添加的 _map_size 这个部分
-    if (_base_handle != NULL) {
+    //z 创建 file mapping， 记录下 map file handle
+    _base_handle = CreateFileMappingA(
+                       _hFile,
+                       NULL,
+                       PAGE_READWRITE,
+                       0,
+                       0,
+                       0);
+
+    //z 映射新添加的 _map_size 这个部分
+    if (_base_handle != NULL)
+    {
         _base = (char*) MapViewOfFile(_base_handle,
-            FILE_MAP_ALL_ACCESS,
-            off_hi,
-            off_lo,
-            _map_size);
-        if (_base != NULL) {
+                                      FILE_MAP_ALL_ACCESS,
+                                      off_hi,
+                                      off_lo,
+                                      _map_size);
+        if (_base != NULL)
+        {
             _limit = _base + _map_size;
             _dst = _base;
             _last_sync = _base;
@@ -356,20 +369,20 @@ bool Win32MapFile::_MapNewRegion()
 Win32MapFile::Win32MapFile( const std::string& fname) :
     _filename(fname),
     _hFile(NULL),
-	//z page size 64k
+    //z page size 64k
     _page_size(Win32::g_PageSize),
-	//z map size 64k
+    //z map size 64k
     _map_size(_Roundup(65536, Win32::g_PageSize)),
     _base(NULL),
     _base_handle(NULL),
     _limit(NULL),
     _dst(NULL),
     _last_sync(NULL),
-	//z 开始时 _file_offset 为0
+    //z 开始时 _file_offset 为0
     _file_offset(0),
     _pending_sync(false)
 {
-	//z 将filename转为 wchar 的形式，打开文件，记录句柄
+    //z 将filename转为 wchar 的形式，打开文件，记录句柄
     _Init(Win32::MultiByteToWChar(fname.c_str() ) );
     assert((Win32::g_PageSize & (Win32::g_PageSize - 1)) == 0);
 }
@@ -377,34 +390,37 @@ Win32MapFile::Win32MapFile( const std::string& fname) :
 //z 附加数据到文件
 Status Win32MapFile::Append( const Slice& data )
 {
-	//z 数据内容
+    //z 数据内容
     const char* src = data.data();
-	//z 数据尺寸
+    //z 数据尺寸
     size_t left = data.size();
     Status s;
-    while (left > 0) {
+    while (left > 0)
+    {
         assert(_base <= _dst);
         assert(_dst <= _limit);
         //z 查看可用空间
-		size_t avail = _limit - _dst;
-		//z 如果无可用空间
-        if (avail == 0) {
+        size_t avail = _limit - _dst;
+        //z 如果无可用空间
+        if (avail == 0)
+        {
             if (!_UnmapCurrentRegion() ||
-                !_MapNewRegion()) {
-                    return Status::IOError("WinMmapFile.Append::UnmapCurrentRegion or MapNewRegion: ", Win32::GetLastErrSz());
+                    !_MapNewRegion())
+            {
+                return Status::IOError("WinMmapFile.Append::UnmapCurrentRegion or MapNewRegion: ", Win32::GetLastErrSz());
             }
         }
 
-		//z 如果 left 比可用的小，那么设置拷贝的为 left；否则设置为可用的
+        //z 如果 left 比可用的小，那么设置拷贝的为 left；否则设置为可用的
         size_t n = (left <= avail) ? left : avail;
-		//z 可以直接向 _dst 写。
+        //z 可以直接向 _dst 写。
         memcpy(_dst, src, n);
-		//z 移动 _dst 到新的位置
+        //z 移动 _dst 到新的位置
         _dst += n;
-		//z 移动 src 指针到新的位置
+        //z 移动 src 指针到新的位置
         src += n;
-		//z 拷贝 n 之后，设置新的left值。
-		//z 大多数情况下，在剩余空间足够的情况下，一次就拷贝完毕了。
+        //z 拷贝 n 之后，设置新的left值。
+        //z 大多数情况下，在剩余空间足够的情况下，一次就拷贝完毕了。
         left -= n;
     }
     return s;
@@ -413,33 +429,40 @@ Status Win32MapFile::Append( const Slice& data )
 Status Win32MapFile::Close()
 {
     Status s;
-	//z 记录下未使用的空间
+    //z 记录下未使用的空间
     size_t unused = _limit - _dst;
-	//z 然后 unmap 文件，_UnmapCurrentRegion总是返回 true
-    if (!_UnmapCurrentRegion()) {
+    //z 然后 unmap 文件，_UnmapCurrentRegion总是返回 true
+    if (!_UnmapCurrentRegion())
+    {
         s = Status::IOError("WinMmapFile.Close::UnmapCurrentRegion: ",Win32::GetLastErrSz());
-    } else if (unused > 0) {
-		//z 从而总是调用下面这些指令
+    }
+    else if (unused > 0)
+    {
+        //z 从而总是调用下面这些指令
         // Trim the extra space at the end of the file
         LARGE_INTEGER newSize;
         //z 去除哪些未使用的文件部分
-		newSize.QuadPart = _file_offset - unused;
-		//z 设置文件指针
-        if (!SetFilePointerEx(_hFile, newSize, NULL, FILE_BEGIN)) {
+        newSize.QuadPart = _file_offset - unused;
+        //z 设置文件指针
+        if (!SetFilePointerEx(_hFile, newSize, NULL, FILE_BEGIN))
+        {
             s = Status::IOError("WinMmapFile.Close::SetFilePointer: ",Win32::GetLastErrSz());
-        } else 
-			//z 调用成功，设置文件的结束部分
+        }
+        else
+            //z 调用成功，设置文件的结束部分
             SetEndOfFile(_hFile);
     }
 
-	//z 关闭文件
-    if (!CloseHandle(_hFile)) {
-        if (s.ok()) {
+    //z 关闭文件
+    if (!CloseHandle(_hFile))
+    {
+        if (s.ok())
+        {
             s = Status::IOError("WinMmapFile.Close::CloseHandle: ", Win32::GetLastErrSz());
         }
     }
 
-	//z 重置成员变量
+    //z 重置成员变量
     _hFile = INVALID_HANDLE_VALUE;
     _base = NULL;
     _base_handle = NULL;
@@ -451,25 +474,29 @@ Status Win32MapFile::Close()
 Status Win32MapFile::Sync()
 {
     Status s;
-    if (_pending_sync) {
+    if (_pending_sync)
+    {
         // Some unmapped data was not synced
         _pending_sync = false;
-        if (!FlushFileBuffers(_hFile)) {
+        if (!FlushFileBuffers(_hFile))
+        {
             s = Status::IOError("WinMmapFile.Sync::FlushFileBuffers: ",Win32::GetLastErrSz());
         }
     }
 
-	if (_dst > _last_sync) {
-		// Find the beginnings of the pages that contain the first and last
+    if (_dst > _last_sync)
+    {
+        // Find the beginnings of the pages that contain the first and last
         // bytes to be synced.
-		size_t p1 = _TruncateToPageBoundary(_last_sync - _base);
-		//z 事实上 _map_size 可能是 _page_size 的几倍 2^4 * 2^6 * 2^10
+        size_t p1 = _TruncateToPageBoundary(_last_sync - _base);
+        //z 事实上 _map_size 可能是 _page_size 的几倍 2^4 * 2^6 * 2^10
         size_t p2 = _TruncateToPageBoundary(_dst - _base - 1);
-		//z _dst 为已写数据的截止的地方
-		_last_sync = _dst;
-		//z 至少写一个 _page_size
-		//z 将一个 mapped view of a file 的区间的字节写到磁盘上
-        if (!FlushViewOfFile(_base + p1, p2 - p1 + _page_size)) {
+        //z _dst 为已写数据的截止的地方
+        _last_sync = _dst;
+        //z 至少写一个 _page_size
+        //z 将一个 mapped view of a file 的区间的字节写到磁盘上
+        if (!FlushViewOfFile(_base + p1, p2 - p1 + _page_size))
+        {
             s = Status::IOError("WinMmapFile.Sync::FlushViewOfFile: ",Win32::GetLastErrSz());
         }
     }
@@ -478,24 +505,25 @@ Status Win32MapFile::Sync()
 
 Status Win32MapFile::Flush()
 {
-	//z 直接返回 ok，是什么意思了？
+    //z 直接返回 ok，是什么意思了？
     return Status::OK();
 }
 
 Win32MapFile::~Win32MapFile()
 {
-	//z 关闭文件
-    if (_hFile != INVALID_HANDLE_VALUE) { 
+    //z 关闭文件
+    if (_hFile != INVALID_HANDLE_VALUE)
+    {
         Win32MapFile::Close();
     }
 }
 
 BOOL Win32MapFile::_Init( LPCWSTR Path )
 {
-	//z 首先查看文件是否存在。存在设置flag为打开已有的，否则总是创建。
+    //z 首先查看文件是否存在。存在设置flag为打开已有的，否则总是创建。
     DWORD Flag = PathFileExistsW(Path) ? OPEN_EXISTING : CREATE_ALWAYS;
     //z 打开文件，记录文件句柄
-	_hFile = CreateFileW(Path,
+    _hFile = CreateFileW(Path,
                          GENERIC_READ | GENERIC_WRITE,
                          FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
                          NULL,
@@ -511,7 +539,7 @@ BOOL Win32MapFile::_Init( LPCWSTR Path )
 
 BOOL Win32MapFile::isEnable()
 {
-	//z 查看是否打开了文件
+    //z 查看是否打开了文件
     return _hFile ? TRUE : FALSE;
 }
 
@@ -531,7 +559,8 @@ BOOL Win32FileLock::_Init( LPCWSTR path )
     BOOL bRet = FALSE;
     if(!_hFile)
         _hFile = ::CreateFileW(path,0,0,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
-    if(!_hFile || _hFile == INVALID_HANDLE_VALUE ){
+    if(!_hFile || _hFile == INVALID_HANDLE_VALUE )
+    {
         _hFile = NULL;
     }
     else
@@ -568,13 +597,17 @@ void Win32Logger::Logv( const char* format, va_list ap )
     // We try twice: the first time with a fixed-size stack allocated buffer,
     // and the second time with a much larger dynamically allocated buffer.
     char buffer[500];
-    for (int iter = 0; iter < 2; iter++) {
+    for (int iter = 0; iter < 2; iter++)
+    {
         char* base;
         int bufsize;
-        if (iter == 0) {
+        if (iter == 0)
+        {
             bufsize = sizeof(buffer);
             base = buffer;
-        } else {
+        }
+        else
+        {
             bufsize = 30000;
             base = new char[bufsize];
         }
@@ -584,18 +617,19 @@ void Win32Logger::Logv( const char* format, va_list ap )
         SYSTEMTIME st;
         GetLocalTime(&st);
         p += snprintf(p, limit - p,
-            "%04d/%02d/%02d-%02d:%02d:%02d.%06d %llx ",
-            int(st.wYear),
-            int(st.wMonth),
-            int(st.wDay),
-            int(st.wHour),
-            int(st.wMinute),
-            int(st.wMinute),
-            int(st.wMilliseconds),
-            static_cast<long long unsigned int>(thread_id));
+                      "%04d/%02d/%02d-%02d:%02d:%02d.%06d %llx ",
+                      int(st.wYear),
+                      int(st.wMonth),
+                      int(st.wDay),
+                      int(st.wHour),
+                      int(st.wMinute),
+                      int(st.wMinute),
+                      int(st.wMilliseconds),
+                      static_cast<long long unsigned int>(thread_id));
 
         // Print the message
-        if (p < limit) {
+        if (p < limit)
+        {
             va_list backup_ap;
             va_copy(backup_ap, ap);
             p += vsnprintf(p, limit - p, format, backup_ap);
@@ -603,26 +637,33 @@ void Win32Logger::Logv( const char* format, va_list ap )
         }
 
         // Truncate to available space if necessary
-        if (p >= limit) {
-            if (iter == 0) {
+        if (p >= limit)
+        {
+            if (iter == 0)
+            {
                 continue;       // Try again with larger buffer
-            } else {
+            }
+            else
+            {
                 p = limit - 1;
             }
         }
 
         // Add newline if necessary
-        if (p == base || p[-1] != '\n') {
+        if (p == base || p[-1] != '\n')
+        {
             *p++ = '\n';
         }
 
         assert(p <= limit);
         DWORD hasWritten = 0;
-        if(_pFileProxy){
+        if(_pFileProxy)
+        {
             _pFileProxy->Append(Slice(base, p - base));
             _pFileProxy->Flush();
         }
-        if (base != buffer) {
+        if (base != buffer)
+        {
             delete[] base;
         }
         break;
@@ -645,13 +686,16 @@ Status Win32Env::GetChildren(const std::string& dir, std::vector<std::string>* r
     Win32::ModifyPath(path);
     path += "\\*.*";
     ::HANDLE hFind = ::FindFirstFileW(
-        Win32::MultiByteToWChar(path.c_str() ) ,&wfd);
-    if(hFind && hFind != INVALID_HANDLE_VALUE){
+                         Win32::MultiByteToWChar(path.c_str() ) ,&wfd);
+    if(hFind && hFind != INVALID_HANDLE_VALUE)
+    {
         BOOL hasNext = TRUE;
         std::string child;
-        while(hasNext){
-            child = Win32::WCharToMultiByte(wfd.cFileName); 
-            if(child != ".." && child != ".")  {
+        while(hasNext)
+        {
+            child = Win32::WCharToMultiByte(wfd.cFileName);
+            if(child != ".." && child != ".")
+            {
                 result->push_back(child);
             }
             hasNext = ::FindNextFileW(hFind,&wfd);
@@ -673,7 +717,8 @@ Status Win32Env::DeleteFile( const std::string& fname )
     Status sRet;
     std::string path = fname;
     Win32::ModifyPath(path);
-    if(!::DeleteFileW(Win32::MultiByteToWChar(path.c_str() ) ) ){
+    if(!::DeleteFileW(Win32::MultiByteToWChar(path.c_str() ) ) )
+    {
         sRet = Status::IOError(path, "Could not delete file.");
     }
     return sRet;
@@ -685,11 +730,13 @@ Status Win32Env::GetFileSize( const std::string& fname, uint64_t* file_size )
     std::string path = fname;
     Win32::ModifyPath(path);
     HANDLE file = ::CreateFileW(Win32::MultiByteToWChar(path.c_str()),
-        GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+                                GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
     LARGE_INTEGER li;
-    if(::GetFileSizeEx(file,&li)){
+    if(::GetFileSizeEx(file,&li))
+    {
         *file_size = (uint64_t)li.QuadPart;
-    }else
+    }
+    else
         sRet = Status::IOError(path,"Could not get the file size.");
     CloseHandle(file);
     return sRet;
@@ -702,14 +749,16 @@ Status Win32Env::RenameFile( const std::string& src, const std::string& target )
     std::wstring target_path = Win32::MultiByteToWChar(target.c_str() );
 
     if(!MoveFile(Win32::ModifyPath(src_path).c_str(),
-                 Win32::ModifyPath(target_path).c_str() ) ){
+                 Win32::ModifyPath(target_path).c_str() ) )
+    {
         DWORD err = GetLastError();
-        if(err == 0x000000b7){
+        if(err == 0x000000b7)
+        {
             if(!::DeleteFileW(target_path.c_str() ) )
                 sRet = Status::IOError(src, "Could not rename file.");
             else if(!::MoveFileW(Win32::ModifyPath(src_path).c_str(),
                                  Win32::ModifyPath(target_path).c_str() ) )
-                sRet = Status::IOError(src, "Could not rename file.");    
+                sRet = Status::IOError(src, "Could not rename file.");
         }
     }
     return sRet;
@@ -721,7 +770,8 @@ Status Win32Env::LockFile( const std::string& fname, FileLock** lock )
     std::string path = fname;
     Win32::ModifyPath(path);
     Win32FileLock* _lock = new Win32FileLock(path);
-    if(!_lock->isEnable()){
+    if(!_lock->isEnable())
+    {
         delete _lock;
         *lock = NULL;
         sRet = Status::IOError(path, "Could not lock file.");
@@ -773,11 +823,13 @@ Status Win32Env::CreateDir( const std::string& dirname )
 {
     Status sRet;
     std::string path = Win32::MultiByteToAnsi(dirname.c_str() );
-    if(path[path.length() - 1] != '\\'){
+    if(path[path.length() - 1] != '\\')
+    {
         path += '\\';
     }
     Win32::ModifyPath(path);
-    if(!::MakeSureDirectoryPathExists( path.c_str() ) ){
+    if(!::MakeSureDirectoryPathExists( path.c_str() ) )
+    {
         sRet = Status::IOError(dirname, "Could not create directory.");
     }
     return sRet;
@@ -788,7 +840,8 @@ Status Win32Env::DeleteDir( const std::string& dirname )
     Status sRet;
     std::wstring path = Win32::MultiByteToWChar(dirname.c_str() ) ;
     Win32::ModifyPath(path);
-    if(!::RemoveDirectoryW( path.c_str() ) ){
+    if(!::RemoveDirectoryW( path.c_str() ) )
+    {
         sRet = Status::IOError(dirname, "Could not delete directory.");
     }
     return sRet;
@@ -800,9 +853,12 @@ Status Win32Env::NewSequentialFile( const std::string& fname, SequentialFile** r
     std::string path = fname;
     Win32::ModifyPath(path);
     Win32SequentialFile* pFile = new Win32SequentialFile(path);
-    if(pFile->isEnable()){
+    if(pFile->isEnable())
+    {
         *result = pFile;
-    }else {
+    }
+    else
+    {
         delete pFile;
         sRet = Status::IOError(path, Win32::GetLastErrSz());
     }
@@ -814,11 +870,13 @@ Status Win32Env::NewRandomAccessFile( const std::string& fname, RandomAccessFile
     Status sRet;
     std::string path = fname;
     Win32RandomAccessFile* pFile = new Win32RandomAccessFile(Win32::ModifyPath(path));
-    if(!pFile->isEnable()){
+    if(!pFile->isEnable())
+    {
         delete pFile;
         *result = NULL;
         sRet = Status::IOError(path,"Could not create random access file.");
-    }else
+    }
+    else
         *result = pFile;
     return sRet;
 }
@@ -827,14 +885,16 @@ Status Win32Env::NewLogger( const std::string& fname, Logger** result )
 {
     Status sRet;
     std::string path = fname;
-	//z 优先使用 Win32MapFile
+    //z 优先使用 Win32MapFile
     Win32MapFile* pMapFile = new Win32MapFile(Win32::ModifyPath(path));
-    if(!pMapFile->isEnable()){
+    if(!pMapFile->isEnable())
+    {
         delete pMapFile;
         *result = NULL;
         sRet = Status::IOError(path,"could not create a logger.");
-    }else
-		//z 如果创建不成功，使用 Win32Logger
+    }
+    else
+        //z 如果创建不成功，使用 Win32Logger
         *result = new Win32Logger(pMapFile);
     return sRet;
 }
@@ -844,10 +904,12 @@ Status Win32Env::NewWritableFile( const std::string& fname, WritableFile** resul
     Status sRet;
     std::string path = fname;
     Win32MapFile* pFile = new Win32MapFile(Win32::ModifyPath(path));
-    if(!pFile->isEnable()){
+    if(!pFile->isEnable())
+    {
         *result = NULL;
         sRet = Status::IOError(fname,Win32::GetLastErrSz());
-    }else
+    }
+    else
         *result = pFile;
     return sRet;
 }

@@ -51,16 +51,17 @@ using std::endl;
 void WriteDb(leveldb::DB* db)
 {
     const char* Content = "We now decided that after three years it might"
-        " be a good idea to re-assess our current situation by another,"
-        " more extensive survey. It is similar to the original one "
-        "(since we included the old questions to be able to compare the results),"
-        " but the survey also contains a bunch of new ones to take new developments"
-        " such as Ogre usage on mobile devices into account.";
+                          " be a good idea to re-assess our current situation by another,"
+                          " more extensive survey. It is similar to the original one "
+                          "(since we included the old questions to be able to compare the results),"
+                          " but the survey also contains a bunch of new ones to take new developments"
+                          " such as Ogre usage on mobile devices into account.";
     char Buff[10];
     ZeroMemory(Buff,sizeof(Buff));
     leveldb::WriteOptions wo;
     wo.sync = false;
-    for(int i = 0 ; i < 2000 ;i++){
+    for(int i = 0 ; i < 2000 ; i++)
+    {
         _itoa_s(i,Buff,10);
 
         leveldb::Status s = db->Put(wo,Buff,Content);
@@ -73,7 +74,8 @@ void ReadDb(leveldb::DB* db)
     char Buff[10];
     ZeroMemory(Buff,sizeof(Buff));
     std::string value__;
-    for(int i = 0 ; i < 2000 ;i++){
+    for(int i = 0 ; i < 2000 ; i++)
+    {
         _itoa_s(i,Buff,10);
         leveldb::Status s = db->Get(ro,Buff,&value__);
     }
@@ -105,9 +107,10 @@ void tt()
 int _tmain(int argc, _TCHAR* argv[])
 {
     int repeat = 100;
-    for(int i = 0 ; i < repeat ; i++){
+    for(int i = 0 ; i < repeat ; i++)
+    {
         tt();
-    } 
+    }
     cout << repeat << " times done."<< endl;
     return _getch();
 }

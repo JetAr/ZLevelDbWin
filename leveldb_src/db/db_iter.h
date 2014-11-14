@@ -9,7 +9,8 @@
 #include "leveldb/db.h"
 #include "db/dbformat.h"
 
-namespace leveldb {
+namespace leveldb
+{
 
 // Return a new iterator that converts internal keys (yielded by
 // "*internal_iter") that were live at the specified "sequence" number

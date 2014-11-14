@@ -4,33 +4,42 @@
 
 #include "leveldb/env.h"
 
-namespace leveldb {
+namespace leveldb
+{
 
-Env::~Env() {
+Env::~Env()
+{
 }
 
-SequentialFile::~SequentialFile() {
+SequentialFile::~SequentialFile()
+{
 }
 
-RandomAccessFile::~RandomAccessFile() {
+RandomAccessFile::~RandomAccessFile()
+{
 }
 
-WritableFile::~WritableFile() {
+WritableFile::~WritableFile()
+{
 }
 
-Logger::~Logger() {
+Logger::~Logger()
+{
 }
 
-FileLock::~FileLock() {
+FileLock::~FileLock()
+{
 }
 
-void Log(Logger* info_log, const char* format, ...) {
-  if (info_log != NULL) {
-    va_list ap;
-    va_start(ap, format);
-    info_log->Logv(format, ap);
-    va_end(ap);
-  }
+void Log(Logger* info_log, const char* format, ...)
+{
+    if (info_log != NULL)
+    {
+        va_list ap;
+        va_start(ap, format);
+        info_log->Logv(format, ap);
+        va_end(ap);
+    }
 }
 
 Status WriteStringToFile(Env* env, const Slice& data,
@@ -92,7 +101,8 @@ Status ReadFileToString(Env* env, const std::string& fname, std::string* data)
     return s;
 }
 
-EnvWrapper::~EnvWrapper() {
+EnvWrapper::~EnvWrapper()
+{
 }
 
 }

@@ -7,7 +7,8 @@
 #include "leveldb/comparator.h"
 #include "leveldb/env.h"
 
-namespace leveldb {
+namespace leveldb
+{
 
 Options::Options()
     : comparator(BytewiseComparator()),
@@ -21,7 +22,8 @@ Options::Options()
       block_cache(NULL),
       block_size(4096),
       block_restart_interval(16),
-      compression(kSnappyCompression) {
+      compression(kSnappyCompression)
+{
 }
 
 

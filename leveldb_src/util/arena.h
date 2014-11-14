@@ -21,63 +21,63 @@ namespace leveldb
 class Arena
 {
 public:
-	Arena();
-	~Arena();
+    Arena();
+    ~Arena();
 
-	// Return a pointer to a newly allocated memory block of "bytes" bytes.
-	char* Allocate(size_t bytes);
+    // Return a pointer to a newly allocated memory block of "bytes" bytes.
+    char* Allocate(size_t bytes);
 
-	// Allocate memory with the normal alignment guarantees provided by malloc
-	char* AllocateAligned(size_t bytes);
+    // Allocate memory with the normal alignment guarantees provided by malloc
+    char* AllocateAligned(size_t bytes);
 
-	// Returns an estimate of the total memory usage of data allocated
-	// by the arena (including space allocated but not yet used for user
-	// allocations).
-	size_t MemoryUsage() const
-	{
+    // Returns an estimate of the total memory usage of data allocated
+    // by the arena (including space allocated but not yet used for user
+    // allocations).
+    size_t MemoryUsage() const
+    {
         //z 分配内存空间，以及存放char*指针的vector所大概占据的空间。
-		return blocks_memory_ + blocks_.capacity() * sizeof(char*);
-	}
+        return blocks_memory_ + blocks_.capacity() * sizeof(char*);
+    }
 
 private:
-	char* AllocateFallback(size_t bytes);
-	char* AllocateNewBlock(size_t block_bytes);
+    char* AllocateFallback(size_t bytes);
+    char* AllocateNewBlock(size_t block_bytes);
 
-	// Allocation state
-	char* alloc_ptr_;
-	size_t alloc_bytes_remaining_;
+    // Allocation state
+    char* alloc_ptr_;
+    size_t alloc_bytes_remaining_;
 
-	// Array of new[] allocated memory blocks
+    // Array of new[] allocated memory blocks
     //z 存放 char* 指针
-	std::vector<char*> blocks_;
+    std::vector<char*> blocks_;
 
-	// Bytes of memory in blocks allocated so far
-	size_t blocks_memory_;
+    // Bytes of memory in blocks allocated so far
+    size_t blocks_memory_;
 
-	// No copying allowed
-	Arena(const Arena&);
-	void operator=(const Arena&);
+    // No copying allowed
+    Arena(const Arena&);
+    void operator=(const Arena&);
 };
 
 inline char* Arena::Allocate(size_t bytes)
 {
-	// The semantics of what to return are a bit messy if we allow
-	// 0-byte allocations, so we disallow them here (we don't need
-	// them for our internal use).
-	assert(bytes > 0);
-	//z 在一块直接分配好的内存上移动一下指针即可；事实上可能会存在很多的浪费。
-	if (bytes <= alloc_bytes_remaining_)
-	{
-		char* result = alloc_ptr_;
-		alloc_ptr_ += bytes;
-		alloc_bytes_remaining_ -= bytes;
-		return result;
-	}
+    // The semantics of what to return are a bit messy if we allow
+    // 0-byte allocations, so we disallow them here (we don't need
+    // them for our internal use).
+    assert(bytes > 0);
+    //z 在一块直接分配好的内存上移动一下指针即可；事实上可能会存在很多的浪费。
+    if (bytes <= alloc_bytes_remaining_)
+    {
+        char* result = alloc_ptr_;
+        alloc_ptr_ += bytes;
+        alloc_bytes_remaining_ -= bytes;
+        return result;
+    }
 
-	//z 如果剩余控件不足与容纳，那么根据bytes大小决定是否重新分配一块标准大小的内存（4096），或者要是bytes大于1024，直接
-	//z 分配其大小的内存，原标准块内存仍旧有用。
-	//z 如果小于 1024 ，说明原标准块剩余内存不足以容纳1024，新分配一块标准块内存，用此来为bytes分配对应内存。
-	return AllocateFallback(bytes);
+    //z 如果剩余控件不足与容纳，那么根据bytes大小决定是否重新分配一块标准大小的内存（4096），或者要是bytes大于1024，直接
+    //z 分配其大小的内存，原标准块内存仍旧有用。
+    //z 如果小于 1024 ，说明原标准块剩余内存不足以容纳1024，新分配一块标准块内存，用此来为bytes分配对应内存。
+    return AllocateFallback(bytes);
 }
 
 }

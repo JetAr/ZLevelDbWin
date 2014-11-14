@@ -39,102 +39,122 @@
 #define ARCH_CPU_ARM_FAMILY 1
 #endif
 
-namespace leveldb {
-    namespace port {
+namespace leveldb
+{
+namespace port
+{
 
-        // Define MemoryBarrier() if available
-        // Windows on x86
+// Define MemoryBarrier() if available
+// Windows on x86
 #if defined(OS_WIN) && defined(COMPILER_MSVC) && defined(ARCH_CPU_X86_FAMILY)
-        // windows.h already provides a MemoryBarrier(void) macro
-        // http://msdn.microsoft.com/en-us/library/ms684208(v=vs.85).aspx
+// windows.h already provides a MemoryBarrier(void) macro
+// http://msdn.microsoft.com/en-us/library/ms684208(v=vs.85).aspx
 #define LEVELDB_HAVE_MEMORY_BARRIER
 
-        // Gcc on x86
+// Gcc on x86
 #elif defined(ARCH_CPU_X86_FAMILY) && defined(__GNUC__)
-        inline void MemoryBarrier() {
-            // See http://gcc.gnu.org/ml/gcc/2003-04/msg01180.html for a discussion on
-            // this idiom. Also see http://en.wikipedia.org/wiki/Memory_ordering.
-            __asm__ __volatile__("" : : : "memory");
-        }
+inline void MemoryBarrier()
+{
+    // See http://gcc.gnu.org/ml/gcc/2003-04/msg01180.html for a discussion on
+    // this idiom. Also see http://en.wikipedia.org/wiki/Memory_ordering.
+    __asm__ __volatile__("" : : : "memory");
+}
 #define LEVELDB_HAVE_MEMORY_BARRIER
 
-        // Sun Studio
+// Sun Studio
 #elif defined(ARCH_CPU_X86_FAMILY) && defined(__SUNPRO_CC)
-        inline void MemoryBarrier() {
-            // See http://gcc.gnu.org/ml/gcc/2003-04/msg01180.html for a discussion on
-            // this idiom. Also see http://en.wikipedia.org/wiki/Memory_ordering.
-            asm volatile("" : : : "memory");
-        }
+inline void MemoryBarrier()
+{
+    // See http://gcc.gnu.org/ml/gcc/2003-04/msg01180.html for a discussion on
+    // this idiom. Also see http://en.wikipedia.org/wiki/Memory_ordering.
+    asm volatile("" : : : "memory");
+}
 #define LEVELDB_HAVE_MEMORY_BARRIER
 
-        // Mac OS
+// Mac OS
 #elif defined(OS_MACOSX)
-        inline void MemoryBarrier() {
-            OSMemoryBarrier();
-        }
+inline void MemoryBarrier()
+{
+    OSMemoryBarrier();
+}
 #define LEVELDB_HAVE_MEMORY_BARRIER
 
-        // ARM
+// ARM
 #elif defined(ARCH_CPU_ARM_FAMILY)
-        typedef void (*LinuxKernelMemoryBarrierFunc)(void);
-        LinuxKernelMemoryBarrierFunc pLinuxKernelMemoryBarrier __attribute__((weak)) =
-            (LinuxKernelMemoryBarrierFunc) 0xffff0fa0;
-        inline void MemoryBarrier() {
-            pLinuxKernelMemoryBarrier();
-        }
+typedef void (*LinuxKernelMemoryBarrierFunc)(void);
+LinuxKernelMemoryBarrierFunc pLinuxKernelMemoryBarrier __attribute__((weak)) =
+    (LinuxKernelMemoryBarrierFunc) 0xffff0fa0;
+inline void MemoryBarrier()
+{
+    pLinuxKernelMemoryBarrier();
+}
 #define LEVELDB_HAVE_MEMORY_BARRIER
 
 #endif
 
-        // AtomicPointer built using platform-specific MemoryBarrier()
+// AtomicPointer built using platform-specific MemoryBarrier()
 #if defined(LEVELDB_HAVE_MEMORY_BARRIER)
-        class AtomicPointer {
-        private:
-            void* rep_;
-        public:
-            AtomicPointer() { }
+class AtomicPointer
+{
+private:
+    void* rep_;
+public:
+    AtomicPointer() { }
 
-            explicit AtomicPointer(void* p) : rep_(p) {}
-            inline void* NoBarrier_Load() const { return rep_; }
-            inline void NoBarrier_Store(void* v) { rep_ = v; }
+    explicit AtomicPointer(void* p) : rep_(p) {}
+    inline void* NoBarrier_Load() const
+    {
+        return rep_;
+    }
+    inline void NoBarrier_Store(void* v)
+    {
+        rep_ = v;
+    }
 
-            inline void* Acquire_Load() const {
-                void* result = rep_;
-                // Creates a hardware memory barrier (fence) that prevents the CPU from re-ordering read and write operations. It may also prevent the compiler from re-ordering read and write operations.
-                // Use this macro or the interlocked functions when the order of memory read and write operations is critical for program operation.
-                //z 看起来是不希望cpu或者编译器对读写操作进行 re-ordering
-                MemoryBarrier();
-                return result;
-            }
-            inline void Release_Store(void* v) {
-                MemoryBarrier();
-                rep_ = v;
-            }
-        };
+    inline void* Acquire_Load() const
+    {
+        void* result = rep_;
+        // Creates a hardware memory barrier (fence) that prevents the CPU from re-ordering read and write operations. It may also prevent the compiler from re-ordering read and write operations.
+        // Use this macro or the interlocked functions when the order of memory read and write operations is critical for program operation.
+        //z 看起来是不希望cpu或者编译器对读写操作进行 re-ordering
+        MemoryBarrier();
+        return result;
+    }
+    inline void Release_Store(void* v)
+    {
+        MemoryBarrier();
+        rep_ = v;
+    }
+};
 
-        // AtomicPointer based on <cstdatomic>
+// AtomicPointer based on <cstdatomic>
 #elif defined(LEVELDB_CSTDATOMIC_PRESENT)
-        class AtomicPointer {
-        private:
-            std::atomic<void*> rep_;
-        public:
-            AtomicPointer() { }
-            explicit AtomicPointer(void* v) : rep_(v) { }
-            inline void* Acquire_Load() const {
-                return rep_.load(std::memory_order_acquire);
-            }
-            inline void Release_Store(void* v) {
-                rep_.store(v, std::memory_order_release);
-            }
-            inline void* NoBarrier_Load() const {
-                return rep_.load(std::memory_order_relaxed);
-            }
-            inline void NoBarrier_Store(void* v) {
-                rep_.store(v, std::memory_order_relaxed);
-            }
-        };
+class AtomicPointer
+{
+private:
+    std::atomic<void*> rep_;
+public:
+    AtomicPointer() { }
+    explicit AtomicPointer(void* v) : rep_(v) { }
+    inline void* Acquire_Load() const
+    {
+        return rep_.load(std::memory_order_acquire);
+    }
+    inline void Release_Store(void* v)
+    {
+        rep_.store(v, std::memory_order_release);
+    }
+    inline void* NoBarrier_Load() const
+    {
+        return rep_.load(std::memory_order_relaxed);
+    }
+    inline void NoBarrier_Store(void* v)
+    {
+        rep_.store(v, std::memory_order_relaxed);
+    }
+};
 
-        // We have neither MemoryBarrier(), nor <cstdatomic>
+// We have neither MemoryBarrier(), nor <cstdatomic>
 #else
 #error Please implement AtomicPointer for this platform.
 
@@ -144,7 +164,7 @@ namespace leveldb {
 #undef ARCH_CPU_X86_FAMILY
 #undef ARCH_CPU_ARM_FAMILY
 
-    } // namespace leveldb::port
+} // namespace leveldb::port
 } // namespace leveldb
 
 #endif  // PORT_ATOMIC_POINTER_H_

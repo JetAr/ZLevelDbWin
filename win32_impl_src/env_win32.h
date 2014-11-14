@@ -102,7 +102,7 @@ private:
     size_t _page_size;
     size_t _map_size;       // How much extra memory to map at a time
     char* _base;            // The mapped region
-    HANDLE _base_handle;	
+    HANDLE _base_handle;
     char* _limit;           // Limit of the mapped region
     char* _dst;             // Where to write next  (in range [base_,limit_])
     char* _last_sync;       // Where have we synced up to
@@ -137,7 +137,7 @@ private:
 
 class Win32Logger : public Logger
 {
-public: 
+public:
     friend class Win32Env;
     virtual ~Win32Logger();
     virtual void Logv(const char* format, va_list ap);
@@ -153,17 +153,17 @@ public:
     Win32Env();
     virtual ~Win32Env();
     virtual Status NewSequentialFile(const std::string& fname,
-        SequentialFile** result);
+                                     SequentialFile** result);
 
     virtual Status NewRandomAccessFile(const std::string& fname,
-        RandomAccessFile** result);
+                                       RandomAccessFile** result);
     virtual Status NewWritableFile(const std::string& fname,
-        WritableFile** result);
+                                   WritableFile** result);
 
     virtual bool FileExists(const std::string& fname);
 
     virtual Status GetChildren(const std::string& dir,
-        std::vector<std::string>* result);
+                               std::vector<std::string>* result);
 
     virtual Status DeleteFile(const std::string& fname);
 
@@ -174,7 +174,7 @@ public:
     virtual Status GetFileSize(const std::string& fname, uint64_t* file_size);
 
     virtual Status RenameFile(const std::string& src,
-        const std::string& target);
+                              const std::string& target);
 
     virtual Status LockFile(const std::string& fname, FileLock** lock);
 

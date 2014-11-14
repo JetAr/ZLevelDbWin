@@ -52,7 +52,8 @@
 
 #include <string>
 
-namespace snappy {
+namespace snappy
+{
 
 #if 1
 typedef int8_t int8;

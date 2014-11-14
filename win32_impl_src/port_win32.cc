@@ -63,7 +63,7 @@ void Mutex::Unlock()
 void Mutex::AssertHeld()
 {
     assert( _cs.OwningThread == reinterpret_cast<HANDLE>(GetCurrentThreadId() ) );
-        
+
 }
 
 BOOL Mutex::TryLock()
@@ -84,7 +84,8 @@ CondVarOld::~CondVarOld()
 {
     Scoped_Lock_Protect(internal_lock_);
     run_state_ = SHUTDOWN; // Prevent any more waiting.
-    if(recycling_list_size_ != allocation_counter_){
+    if(recycling_list_size_ != allocation_counter_)
+    {
         // Rare shutdown problem.
         // There are threads of execution still in this->TimedWait() and yet the
         // caller has instigated the destruction of this instance :-/.
@@ -141,7 +142,8 @@ void CondVarOld::SignalAll()
             // This is not a leak from waiting_list_.  See FAQ-question 12.
             handles.push(waiting_list_.PopBack()->handle());
     }  // Release internal_lock_.
-    while (!handles.empty()) {
+    while (!handles.empty())
+    {
         SetEvent(handles.top());
         handles.pop();
     }
@@ -151,7 +153,8 @@ void CondVarOld::SignalAll()
 // cv_event).  For better performance we signal the thread that went to sleep
 // most recently (LIFO).  If we want fairness, then we wake the thread that has
 // been sleeping the longest (FIFO).
-void CondVarOld::Signal() {
+void CondVarOld::Signal()
+{
     HANDLE handle;
     {
         Scoped_Lock_Protect(internal_lock_);
@@ -168,16 +171,20 @@ void CondVarOld::Signal() {
 // wait.  This means that (worst case) we may over time create as many cv_event
 // objects as there are threads simultaneously using this instance's Wait()
 // functionality.
-CondVarOld::Event* CondVarOld::GetEventForWaiting() {
+CondVarOld::Event* CondVarOld::GetEventForWaiting()
+{
     // We hold internal_lock, courtesy of Wait().
     Event* cv_event;
-    if (0 == recycling_list_size_) {
+    if (0 == recycling_list_size_)
+    {
         assert( recycling_list_.IsEmpty() );
         cv_event = new Event();
         cv_event->InitListElement();
         allocation_counter_++;
         assert( cv_event->handle() );
-    } else {
+    }
+    else
+    {
         cv_event = recycling_list_.PopFront();
         recycling_list_size_--;
     }
@@ -190,7 +197,8 @@ CondVarOld::Event* CondVarOld::GetEventForWaiting() {
 // Note that there is a tiny chance that the cv_event is still signaled when we
 // obtain it, and that can cause spurious signals (if/when we re-use the
 // cv_event), but such is quite rare (see FAQ-question-5).
-void CondVarOld::RecycleEvent(Event* used_event) {
+void CondVarOld::RecycleEvent(Event* used_event)
+{
     // We hold internal_lock, courtesy of Wait().
     // If the cv_event timed out, then it is necessary to remove it from
     // waiting_list_.  If it was selected by Broadcast() or Signal(), then it is
@@ -200,39 +208,47 @@ void CondVarOld::RecycleEvent(Event* used_event) {
     recycling_list_size_++;
 }
 
-CondVarOld::Event::Event() : handle_(0) {
+CondVarOld::Event::Event() : handle_(0)
+{
     next_ = prev_ = this;  // Self referencing circular.
 }
 
-CondVarOld::Event::~Event() {
-    if (0 == handle_) {
+CondVarOld::Event::~Event()
+{
+    if (0 == handle_)
+    {
         // This is the list holder
-        while (!IsEmpty()) {
+        while (!IsEmpty())
+        {
             Event* cv_event = PopFront();
             assert ( cv_event->ValidateAsItem() );
             delete cv_event;
         }
     }
     assert ( IsSingleton());
-    if (0 != handle_) {
+    if (0 != handle_)
+    {
         int ret_val = CloseHandle(handle_);
     }
 }
 
 // Change a container instance permanently into an element of a list.
-void CondVarOld::Event::InitListElement() {
+void CondVarOld::Event::InitListElement()
+{
     assert (!handle_);
     handle_ = CreateEvent(NULL, false, false, NULL);
     assert ( handle_);
 }
 
 // Methods for use on lists.
-bool CondVarOld::Event::IsEmpty() const {
+bool CondVarOld::Event::IsEmpty() const
+{
     assert(ValidateAsList());
     return IsSingleton();
 }
 
-void CondVarOld::Event::PushBack(Event* other) {
+void CondVarOld::Event::PushBack(Event* other)
+{
     assert(ValidateAsList());
     assert(other->ValidateAsItem());
     assert(other->IsSingleton());
@@ -245,13 +261,15 @@ void CondVarOld::Event::PushBack(Event* other) {
     assert( ValidateAsDistinct(other));
 }
 
-CondVarOld::Event* CondVarOld::Event::PopFront() {
+CondVarOld::Event* CondVarOld::Event::PopFront()
+{
     assert(ValidateAsList());
     assert(!IsSingleton());
     return next_->Extract();
 }
 
-CondVarOld::Event* CondVarOld::Event::PopBack() {
+CondVarOld::Event* CondVarOld::Event::PopBack()
+{
     assert(ValidateAsList());
     assert(!IsSingleton());
     return prev_->Extract();
@@ -259,15 +277,18 @@ CondVarOld::Event* CondVarOld::Event::PopBack() {
 
 // Methods for use on list elements.
 // Accessor method.
-HANDLE CondVarOld::Event::handle() const {
+HANDLE CondVarOld::Event::handle() const
+{
     assert( ValidateAsItem());
     return handle_;
 }
 
 // Pull an element from a list (if it's in one).
-CondVarOld::Event* CondVarOld::Event::Extract() {
+CondVarOld::Event* CondVarOld::Event::Extract()
+{
     assert( ValidateAsItem());
-    if (!IsSingleton()) {
+    if (!IsSingleton())
+    {
         // Stitch neighbors together.
         next_->prev_ = prev_;
         prev_->next_ = next_;
@@ -279,25 +300,30 @@ CondVarOld::Event* CondVarOld::Event::Extract() {
 }
 
 // Method for use on a list element or on a list.
-bool CondVarOld::Event::IsSingleton() const {
+bool CondVarOld::Event::IsSingleton() const
+{
     assert( ValidateLinks() );
     return next_ == this;
 }
 
 // Provide pre/post conditions to validate correct manipulations.
-bool CondVarOld::Event::ValidateAsDistinct(Event* other) const {
+bool CondVarOld::Event::ValidateAsDistinct(Event* other) const
+{
     return ValidateLinks() && other->ValidateLinks() && (this != other);
 }
 
-bool CondVarOld::Event::ValidateAsItem() const {
+bool CondVarOld::Event::ValidateAsItem() const
+{
     return (0 != handle_) && ValidateLinks();
 }
 
-bool CondVarOld::Event::ValidateAsList() const {
+bool CondVarOld::Event::ValidateAsList() const
+{
     return (0 == handle_) && ValidateLinks();
 }
 
-bool CondVarOld::Event::ValidateLinks() const {
+bool CondVarOld::Event::ValidateLinks() const
+{
     // Make sure both of our neighbors have links that point back to us.
     // We don't do the O(n) check and traverse the whole loop, and instead only
     // do a local check to (and returning from) our immediate neighbors.

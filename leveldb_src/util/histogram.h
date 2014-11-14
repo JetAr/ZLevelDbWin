@@ -14,38 +14,38 @@ namespace leveldb
 class Histogram
 {
 public:
-	Histogram() { }
-	~Histogram() { }
+    Histogram() { }
+    ~Histogram() { }
 
     //z 清除所有的值
-	void Clear();
+    void Clear();
     //z 增加一个值
-	void Add(double value);
+    void Add(double value);
     //z 合并两个直方图
-	void Merge(const Histogram& other);
+    void Merge(const Histogram& other);
 
     //z 格式化输出直方图一些信息，如果均值，中位值，样本个数等等
-	std::string ToString() const;
+    std::string ToString() const;
 
 private:
-	double min_;
-	double max_;
-	double num_;
-	double sum_;
-	double sum_squares_;
+    double min_;
+    double max_;
+    double num_;
+    double sum_;
+    double sum_squares_;
 
-	enum { kNumBuckets = 154 };
-	static const double kBucketLimit[kNumBuckets];
+    enum { kNumBuckets = 154 };
+    static const double kBucketLimit[kNumBuckets];
     //z 存储 在对应范围的
-	double buckets_[kNumBuckets];
+    double buckets_[kNumBuckets];
 
     //z 中位数
-	double Median() const;
-	double Percentile(double p) const;
+    double Median() const;
+    double Percentile(double p) const;
     //z 平均值
-	double Average() const;
+    double Average() const;
     //z 方差
-	double StandardDeviation() const;
+    double StandardDeviation() const;
 };
 
 }

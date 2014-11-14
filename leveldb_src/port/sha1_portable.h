@@ -7,8 +7,10 @@
 
 #include <stddef.h>
 
-namespace leveldb {
-namespace port {
+namespace leveldb
+{
+namespace port
+{
 
 // Compute the SHA1 hash value of "data[0..len-1]" and store it in
 // "hash_array[0..19]".  hash_array must have 20 bytes of space available.

@@ -8,7 +8,7 @@
 #elif defined DLL_BUILD
 #define LEVELDB_EXPORT __declspec(dllexport)
 #else
-#define LEVELDB_EXPORT 
+#define LEVELDB_EXPORT
 #endif
 
 #endif

@@ -40,9 +40,9 @@ typedef INT64 int64;
 #  define DISALLOW_COPY_AND_ASSIGN(TypeName) \
     TypeName(const TypeName&); \
     void operator=(const TypeName&)
-#endif 
+#endif
 
-#if defined _WIN32_WINNT_VISTA 
+#if defined _WIN32_WINNT_VISTA
 #define USE_VISTA_API
 #endif
 
@@ -52,13 +52,13 @@ typedef INT64 int64;
 #pragma warning(disable:4244)
 #pragma warning(disable:4800)
 //#pragma warning(disable:4996)
-    
+
 namespace leveldb
 {
 namespace port
 {
 #if defined _M_IX86
-    static const bool kLittleEndian = true;
+static const bool kLittleEndian = true;
 #endif
 
 class Event
@@ -74,7 +74,7 @@ private:
     DISALLOW_COPY_AND_ASSIGN(Event);
 };
 
-class Mutex 
+class Mutex
 {
 public:
     friend class CondVarNew;
@@ -147,7 +147,8 @@ public:
     void SignalAll();
 
 private:
-    class Event {
+    class Event
+    {
     public:
         // Default constructor with no arguments creates a list container.
         Event();
@@ -237,7 +238,8 @@ bool Snappy_GetUncompressedLength(const char* input, size_t length,size_t* resul
 
 bool Snappy_Uncompress(const char* input, size_t length,char* output);
 
-inline bool GetHeapProfile(void (*func)(void*, const char*, int), void* arg) {
+inline bool GetHeapProfile(void (*func)(void*, const char*, int), void* arg)
+{
     return false;
 }
 

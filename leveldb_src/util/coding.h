@@ -18,7 +18,8 @@
 #include "leveldb/slice.h"
 #include "port/port.h"
 
-namespace leveldb {
+namespace leveldb
+{
 
 // Standard Put... routines append to a string
 extern void PutFixed32(std::string* dst, uint32_t value);
@@ -57,50 +58,61 @@ extern char* EncodeVarint64(char* dst, uint64_t value);
 // Lower-level versions of Get... that read directly from a character buffer
 // without any bounds checking.
 
-inline uint32_t DecodeFixed32(const char* ptr) {
-  if (port::kLittleEndian) {
-    // Load the raw bytes
-    uint32_t result;
-    memcpy(&result, ptr, sizeof(result));  // gcc optimizes this to a plain load
-    return result;
-  } else {
-    return ((static_cast<uint32_t>(ptr[0]))
-            | (static_cast<uint32_t>(ptr[1]) << 8)
-            | (static_cast<uint32_t>(ptr[2]) << 16)
-            | (static_cast<uint32_t>(ptr[3]) << 24));
-  }
+inline uint32_t DecodeFixed32(const char* ptr)
+{
+    if (port::kLittleEndian)
+    {
+        // Load the raw bytes
+        uint32_t result;
+        memcpy(&result, ptr, sizeof(result));  // gcc optimizes this to a plain load
+        return result;
+    }
+    else
+    {
+        return ((static_cast<uint32_t>(ptr[0]))
+                | (static_cast<uint32_t>(ptr[1]) << 8)
+                | (static_cast<uint32_t>(ptr[2]) << 16)
+                | (static_cast<uint32_t>(ptr[3]) << 24));
+    }
 }
 //z 类似32位。
-inline uint64_t DecodeFixed64(const char* ptr) {
-  if (port::kLittleEndian) {
-    // Load the raw bytes
-    uint64_t result;
-    memcpy(&result, ptr, sizeof(result));  // gcc optimizes this to a plain load
-    return result;
-  } else {
-    uint64_t lo = DecodeFixed32(ptr);
-    uint64_t hi = DecodeFixed32(ptr + 4);
-    return (hi << 32) | lo;
-  }
+inline uint64_t DecodeFixed64(const char* ptr)
+{
+    if (port::kLittleEndian)
+    {
+        // Load the raw bytes
+        uint64_t result;
+        memcpy(&result, ptr, sizeof(result));  // gcc optimizes this to a plain load
+        return result;
+    }
+    else
+    {
+        uint64_t lo = DecodeFixed32(ptr);
+        uint64_t hi = DecodeFixed32(ptr + 4);
+        return (hi << 32) | lo;
+    }
 }
 
 // Internal routine for use by fallback path of GetVarint32Ptr
 extern const char* GetVarint32PtrFallback(const char* p,
-                                          const char* limit,
-                                          uint32_t* value);
+        const char* limit,
+        uint32_t* value);
 inline const char* GetVarint32Ptr(const char* p,
                                   const char* limit,
-                                  uint32_t* value) {
-  if (p < limit) {
-    uint32_t result = *(reinterpret_cast<const unsigned char*>(p));
-    // 128 = 2^7 = 8*16 = 1000000。
-    //z 判断 ascII 值是否小于 128
-	if ((result & 128) == 0) {
-      *value = result;
-      return p + 1;//z 为何 return p+1
+                                  uint32_t* value)
+{
+    if (p < limit)
+    {
+        uint32_t result = *(reinterpret_cast<const unsigned char*>(p));
+        // 128 = 2^7 = 8*16 = 1000000。
+        //z 判断 ascII 值是否小于 128
+        if ((result & 128) == 0)
+        {
+            *value = result;
+            return p + 1;//z 为何 return p+1
+        }
     }
-  }
-  return GetVarint32PtrFallback(p, limit, value);
+    return GetVarint32PtrFallback(p, limit, value);
 }
 
 }
