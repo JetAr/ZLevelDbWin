@@ -268,6 +268,7 @@ void LRUCache::Unref(LRUHandle* e)
     if (e->refs <= 0)
     {
         usage_ -= e->charge;
+        //z 保存了函数指针，使用此函数指针来进行释放方面的操作。
         (*e->deleter)(e->key(), e->value);
         free(e);
     }
@@ -289,7 +290,7 @@ void LRUCache::LRU_Append(LRUHandle* e)
     e->next->prev = e;
 }
 
-Cache::Handle* LRUCache::Lookup(const Slice& key, uint32_t hash)
+Cache::Handle* LRUCache::Loovkup(const Slice& key, uint32_t hash)
 {
     //z 这样的话，在查找的时候只用锁定16中的一个，而不影响其他shard_的操作
     MutexLock l(&mutex_);
