@@ -26,6 +26,7 @@ void AppendInternalKey(std::string* result, const ParsedInternalKey& key)
 std::string ParsedInternalKey::DebugString() const
 {
     char buf[50];
+    //z 输出 sequence no. 以及其类型
     snprintf(buf, sizeof(buf), "' @ %llu : %d",
              (unsigned long long) sequence,
              int(type));

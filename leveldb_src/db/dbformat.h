@@ -200,6 +200,7 @@ class LookupKey
 public:
     // Initialize *this for looking up user_key at a snapshot with
     // the specified sequence number.
+    //z 使用指定的 sequence number 来初始化该 user_key 。
     LookupKey(const Slice& user_key, SequenceNumber sequence);
 
     ~LookupKey();
@@ -240,6 +241,7 @@ private:
     void operator=(const LookupKey&);
 };
 
+//z 是否分配了新的空间，如果分配了，删除
 inline LookupKey::~LookupKey()
 {
     if (start_ != space_) delete[] start_;
